@@ -1,0 +1,143 @@
+services:
+  golang-app:
+    container_name: golang-app
+    build:
+      context: ./golang-app
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8081
+    expose:
+      - 8081
+    labels:
+      traefik.enable: true
+      traefik.http.routers.golang-app.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.golang-app.entrypoints: websecure
+      traefik.http.routers.golang-app.tls: true
+      traefik.http.routers.golang-app.tls.certresolver: letsencrypt
+      traefik.http.routers.golang-app.priority: 55
+      traefik.http.routers.golang-app.middlewares: tinyauth-forward@docker
+      traefik.http.services.golang-app.loadbalancer.server.port: 8081
+      traefik.http.services.golang-app.loadbalancer.passhostheader: true
+    networks:
+      - dokploy-network
+
+  zitadel:
+    restart: unless-stopped
+    image: ghcr.io/zitadel/zitadel:v3.4.3
+    container_name: zitadel
+    command: start-from-init --masterkey ${ZITADEL_MASTER_KEY}
+    environment:
+      ZITADEL_EXTERNALDOMAIN: ${ZITADEL_DOMAIN}
+      ZITADEL_EXTERNALSECURE: true
+      ZITADEL_TLS_ENABLED: false
+      ZITADEL_DATABASE_POSTGRES_HOST: ${DATABASE_POSTGRES_HOST}
+      ZITADEL_DATABASE_POSTGRES_PORT: ${DATABASE_POSTGRES_PORT}
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${DATABASE_POSTGRES_DATABASE}
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${DATABASE_POSTGRES_USER_USERNAME}
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${DATABASE_POSTGRES_USER_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${DATABASE_POSTGRES_USER_USERNAME}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${DATABASE_POSTGRES_USER_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /current-dir/login-client.pat
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: false
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Automatically Initialized IAM_LOGIN_CLIENT
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: 1899990000
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: true
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://${ZITADEL_DOMAIN}/ui/v2/login
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://${ZITADEL_DOMAIN}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://${ZITADEL_DOMAIN}/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: https://${ZITADEL_DOMAIN}/ui/v2/login/login?samlRequest=
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: ${ZITADEL_DEFAULT_USERNAME}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_DEFAULT_PASSWORD}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ZITADEL_DEFAULT_EMAIL}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_VERIFIED: true
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST: ${ZITADEL_SMTP_HOST}:${ZITADEL_SMTP_PORT}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_USER: ${ZITADEL_SMTP_USER}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD: ${ZITADEL_SMTP_PASSWORD}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_TLS: true
+      
+      # Sender Details (Visible to users)
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROM: ${ZITADEL_SENDER_ADDRESS}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROMNAME: ${ZITADEL_SENDER_NAME}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_REPLYTOADDRESS: ${ZITADEL_SENDER_ADDRESS}
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 60s
+      retries: 5
+      start_period: 10s
+    user: "0"
+    volumes:
+      - .:/current-dir:delegated
+    expose:
+      - 8080
+    labels:
+      traefik.enable: true
+      traefik.http.routers.zitadel.rule: Host(`${ZITADEL_DOMAIN}`)
+      traefik.http.routers.zitadel.entrypoints: websecure
+      traefik.http.routers.zitadel.tls: true
+      traefik.http.routers.zitadel.priority: 20
+      traefik.http.routers.zitadel.tls.certresolver: letsencrypt
+      traefik.http.services.zitadel.loadbalancer.server.port: 8080
+    networks:
+      - dokploy-network
+
+  login:
+    restart: unless-stopped
+    image: ghcr.io/zitadel/zitadel-login:latest
+    environment:
+      # Update to the secure external API URL
+      ZITADEL_API_URL: https://${ZITADEL_DOMAIN}
+      NEXT_PUBLIC_BASE_PATH: /ui/v2/login
+      ZITADEL_SERVICE_USER_TOKEN_FILE: /current-dir/login-client.pat
+    network_mode: service:zitadel
+    user: "0"
+    volumes:
+      - .:/current-dir:ro
+
+  tinyauth:
+    image: ghcr.io/steveiliop56/tinyauth:latest
+    container_name: tinyauth
+    restart: unless-stopped
+    expose:
+      - 3000
+    environment:
+      SECRET: ${TINYAUTH_SECRET_KEY}
+      APP_URL: https://${TINYAUTH_DOMAIN}
+      PORT: 3000
+      LOG_LEVEL: debug
+      SECURE_COOKIE: true
+      OAUTH_AUTO_REDIRECT: zitadel
+      PROVIDERS_ZITADEL_CLIENT_ID: ${PROVIDERS_ZITADEL_CLIENT_ID}
+      PROVIDERS_ZITADEL_CLIENT_SECRET: ${PROVIDERS_ZITADEL_CLIENT_SECRET}
+      PROVIDERS_ZITADEL_AUTH_URL: https://${ZITADEL_DOMAIN}/oauth/v2/authorize
+      PROVIDERS_ZITADEL_TOKEN_URL: https://${ZITADEL_DOMAIN}/oauth/v2/token
+      PROVIDERS_ZITADEL_USER_INFO_URL: https://${ZITADEL_DOMAIN}/oidc/v1/userinfo
+      PROVIDERS_ZITADEL_REDIRECT_URL: https://${TINYAUTH_DOMAIN}/api/oauth/callback/zitadel
+      PROVIDERS_ZITADEL_USER_ID_CLAIM: sub
+      PROVIDERS_ZITADEL_EMAIL_CLAIM: email
+      PROVIDERS_ZITADEL_NAME: Zitadel
+      PROVIDERS_ZITADEL_SCOPES: openid profile email groups
+      BACKGROUND_IMAGE: https://images.pexels.com/photos/8828328/pexels-photo-8828328.jpeg
+      APP_TITLE: SIGESSIS
+      USERS_ALLOW_ANY_OAUTH: true
+    labels:
+      traefik.enable: true
+      traefik.http.routers.tinyauth.rule: Host(`${TINYAUTH_DOMAIN}`)
+      traefik.http.routers.tinyauth.entrypoints: websecure
+      traefik.http.routers.tinyauth.tls: true
+      traefik.http.routers.tinyauth.tls.certresolver: letsencrypt
+      traefik.http.services.tinyauth.loadbalancer.server.port: 3000
+      traefik.http.middlewares.tinyauth-forward.forwardauth.address: http://tinyauth:3000/api/auth/traefik
+      traefik.http.middlewares.tinyauth-forward.forwardauth.authresponseheaders: remote-user,remote-email,remote-groups
+      tinyauth.apps.golang-app.oauth.groups: VIEWER_GROUP
+    depends_on:
+      - zitadel
+      - golang-app
+    networks:
+      - dokploy-network
+networks:
+  dokploy-network:
+    external: true
