@@ -10,12 +10,23 @@ services:
       - 8081
     labels:
       traefik.enable: true
-      traefik.http.routers.golang-app.rule: Host(`${APP_DOMAIN}`)
-      traefik.http.routers.golang-app.entrypoints: websecure
-      traefik.http.routers.golang-app.tls: true
-      traefik.http.routers.golang-app.tls.certresolver: letsencrypt
-      traefik.http.routers.golang-app.priority: 55
-      traefik.http.routers.golang-app.middlewares: tinyauth-forward@docker
+
+      traefik.http.routers.golang-app-protected.rule: Host(`${APP_DOMAIN}`) && PathPrefix(`/protected`)
+      traefik.http.routers.golang-app-protected.entrypoints: websecure
+      traefik.http.routers.golang-app-protected.tls: true
+      traefik.http.routers.golang-app-protected.tls.certresolver: letsencrypt
+      traefik.http.routers.golang-app-protected.priority: 100
+      traefik.http.routers.golang-app-protected.middlewares: tinyauth-forward@docker
+      traefik.http.routers.golang-app-protected.service: golang-app
+      
+      traefik.http.routers.golang-app-public.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.golang-app-public.entrypoints: websecure
+      traefik.http.routers.golang-app-public.tls: true
+      traefik.http.routers.golang-app-public.tls.certresolver: letsencrypt
+      traefik.http.routers.golang-app-public.priority: 50
+      traefik.http.routers.golang-app-public.service: golang-app
+      
+      # shared by both routers
       traefik.http.services.golang-app.loadbalancer.server.port: 8081
       traefik.http.services.golang-app.loadbalancer.passhostheader: true
     networks:
