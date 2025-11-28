@@ -13,6 +13,7 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 <head>
 	<title>Received Headers</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="shortcut icon" href="https://login.melkishengue.com/favicon.ico" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
 	<style>
@@ -35,6 +36,7 @@ func protectedPageHandler(w http.ResponseWriter, r *http.Request) {
 <head>
 	<title>Received Headers</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="shortcut icon" href="https://login.melkishengue.com/favicon.ico" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
 	<style>
