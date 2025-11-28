@@ -19,7 +19,7 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 	<style>
 		body {
 			font-family: 'JetBrains Mono', monospace;
-			font-size: 10px;
+			font-size: 12px;
 			margin: 20px;
 		}
 	</style>
@@ -42,7 +42,7 @@ func protectedPageHandler(w http.ResponseWriter, r *http.Request) {
 	<style>
 		body {
 			font-family: 'JetBrains Mono', monospace;
-			font-size: 10px;
+			font-size: 12px;
 			margin: 20px;
 		}
 		.highlight {
