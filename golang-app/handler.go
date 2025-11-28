@@ -49,7 +49,10 @@ func protectedPageHandler(w http.ResponseWriter, r *http.Request) {
 	</style>
 </head>
 <body>`)
-	fmt.Fprintln(w, fmt.Sprintf("<h1>Welcome, %s (%s)</h1>", r.Header["Remote-User"], r.Header["Remote-Groups"]))
+
+	username := r.Header["Remote-User"][0]
+	role := r.Header["Remote-Groups"][0]
+	fmt.Fprintln(w, fmt.Sprintf("<h1>Welcome, %s (%s)</h1>", username, role))
 
 	for name, values := range r.Header {
 		for _, value := range values {
