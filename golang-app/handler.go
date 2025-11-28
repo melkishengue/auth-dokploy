@@ -53,8 +53,8 @@ func protectedPageHandler(w http.ResponseWriter, r *http.Request) {
 </head>
 <body>`)
 
-	username := r.Header["Remote-User"][0]
-	role := r.Header["Remote-Groups"][0]
+	username := r.Header.Get("Remote-User")
+	role := r.Header.Get("Remote-Groups")
 	fmt.Fprintln(w, fmt.Sprintf("<h1>Welcome, %s (%s)</h1>", username, role))
 
 	for name, values := range r.Header {
