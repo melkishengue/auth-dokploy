@@ -26,6 +26,7 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 </head>
 <body>`)
 	fmt.Fprintln(w, "<h1>Welcome, user</h1>")
+	fmt.Fprintln(w, "<div>This is a public page. Anyone can access it.</div>")
 	fmt.Fprintln(w, "</body></html>")
 }
 
