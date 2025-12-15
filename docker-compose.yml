@@ -127,7 +127,7 @@ services:
       PROVIDERS_ZITADEL_TOKEN_URL: https://${ZITADEL_DOMAIN}/oauth/v2/token
       PROVIDERS_ZITADEL_USER_INFO_URL: https://${ZITADEL_DOMAIN}/oidc/v1/userinfo
       PROVIDERS_ZITADEL_REDIRECT_URL: https://${TINYAUTH_DOMAIN}/api/oauth/callback/zitadel
-      PROVIDERS_ZITADEL_USER_ID_CLAIM: sub
+      # PROVIDERS_ZITADEL_USER_ID_CLAIM: sub
       PROVIDERS_ZITADEL_EMAIL_CLAIM: email
       PROVIDERS_ZITADEL_NAME: Zitadel
       PROVIDERS_ZITADEL_SCOPES: openid profile email groups urn:zitadel:iam:user:metadata

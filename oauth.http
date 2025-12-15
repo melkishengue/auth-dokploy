@@ -1,0 +1,112 @@
+@zitadelDomain=auth.afribytes.com
+@clientId=347966507428413947
+@clientSecret=spi7y0NVkcAlep6ourflvgcit8hkFaLOHH8LxzgBA8XeWPNQ6bl1IOnN1kG1ya8s
+@redirectUri=http://localhost:3000/callback
+@scopes=openid profile email groups
+
+### Step 1: Get Authorization URL (copy this to browser)
+# This URL needs to be opened in a browser
+# After login, you'll be redirected to your redirect_uri with a 'code' parameter
+# Copy that code value for Step 2
+
+GET https://{{zitadelDomain}}/oauth/v2/authorize
+  ?client_id={{clientId}}
+  &response_type=code
+  &redirect_uri={{redirectUri}}
+  &scope={{scopes}}
+  &state=random_state_string
+
+###
+# MANUAL STEP: 
+# 1. Copy the URL above and open it in your browser
+# 2. Login with your Zitadel credentials
+# 3. You'll be redirected to: http://localhost:3000/callback?code=XXXXXX&state=random_state_string
+# 4. Copy the 'code' value from the URL and paste it below
+
+@authorizationCode=E4Oz6UbhD3DKcMw4d5Qv7F4rZMiJpvfF7dG4Y7RB7rPe4g
+
+### Step 2: Exchange Authorization Code for Tokens
+POST https://{{zitadelDomain}}/oauth/v2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code={{authorizationCode}}
+&redirect_uri={{redirectUri}}
+&client_id={{clientId}}
+&client_secret={{clientSecret}}
+
+###
+# Response will contain:
+# {
+#   "access_token": "...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "refresh_token": "...",
+#   "id_token": "..."
+# }
+# Copy the access_token for the next step
+
+@accessToken=1bAREvvAAQTXuVrUmHob9Uom4Etmid0kT9IrCkwxUJ4_JDRsf0Kst-0dJ6NXOKfP059a7Ra6CSEnvbDPBKNoxBZ8oOQ25QFMETFDUJ3J
+
+### Step 3: Get User Info (this is what TinyAuth calls)
+GET https://{{zitadelDomain}}/oidc/v1/userinfo
+Authorization: Bearer {{accessToken}}
+
+###
+# This response will show you all the claims Zitadel returns, including:
+# - sub (the user ID you need!)
+# - email
+# - name
+# - preferred_username
+# - groups
+# etc.
+
+### Step 4: Decode ID Token (optional but useful)
+# Copy the id_token from Step 2 and paste it at https://jwt.io
+# This will show you all claims in the ID token
+
+### Step 5: Get OIDC Discovery Document (to see what Zitadel supports)
+GET https://{{zitadelDomain}}/.well-known/openid-configuration
+
+###
+
+### Step 6: Introspect Token (optional - check token details)
+POST https://{{zitadelDomain}}/oauth/v2/introspect
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic {{clientId}}:{{clientSecret}}
+
+token={{accessToken}}
+
+###
+
+{
+  "email": "admin@afribytes.com",
+  "email_verified": true,
+  "family_name": "Admin",
+  "given_name": "ZITADEL",
+  "groups": [
+    "REPORTER",
+    "VIEWER"
+  ],
+  "locale": "en",
+  "name": "ZITADEL Admin",
+  "preferred_username": "admin@zitadel.auth.afribytes.com",
+  "sub": "347965879994614267",
+  "updated_at": 1763899829,
+  "urn:zitadel:iam:org:project:347966106519994875:roles": {
+    "REPORTER": {
+      "347965879994089979": "zitadel.auth.afribytes.com"
+    },
+    "VIEWER": {
+      "347965879994089979": "zitadel.auth.afribytes.com"
+    }
+  },
+  "urn:zitadel:iam:org:project:roles": {
+    "REPORTER": {
+      "347965879994089979": "zitadel.auth.afribytes.com"
+    },
+    "VIEWER": {
+      "347965879994089979": "zitadel.auth.afribytes.com"
+    }
+  }
+}
