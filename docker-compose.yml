@@ -130,7 +130,6 @@ services:
       PROVIDERS_ZITADEL_USER_ID_CLAIM: sub
       PROVIDERS_ZITADEL_EMAIL_CLAIM: email
       PROVIDERS_ZITADEL_NAME: Zitadel
-      PROVIDERS_ZITADEL_SCOPES: openid profile email groups urn:zitadel:iam:user:metadata
       BACKGROUND_IMAGE: https://images.pexels.com/photos/8828328/pexels-photo-8828328.jpeg
       APP_TITLE: SIGESSIS
       USERS_ALLOW_ANY_OAUTH: true
@@ -142,8 +141,7 @@ services:
       traefik.http.routers.tinyauth.tls.certresolver: letsencrypt
       traefik.http.services.tinyauth.loadbalancer.server.port: 3000
       traefik.http.middlewares.tinyauth-forward.forwardauth.address: http://tinyauth:3000/api/auth/traefik
-      traefik.http.middlewares.tinyauth-forward.forwardauth.authresponseheaders: remote-user,remote-email,remote-groups,remote-user-id
-      tinyauth.apps.golang-app.oauth.groups: VIEWER_GROUP
+      traefik.http.middlewares.tinyauth-forward.forwardauth.authresponseheaders: remote-user,remote-email,remote-groups,remote-user-id,remote-name
     depends_on:
       - zitadel
       - golang-app
