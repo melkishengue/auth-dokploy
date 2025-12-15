@@ -130,6 +130,7 @@ services:
       PROVIDERS_ZITADEL_USER_ID_CLAIM: sub
       PROVIDERS_ZITADEL_EMAIL_CLAIM: email
       PROVIDERS_ZITADEL_NAME: Zitadel
+      PROVIDERS_ZITADEL_SCOPES: openid profile email groups urn:zitadel:iam:user:metadata,
       BACKGROUND_IMAGE: https://images.pexels.com/photos/8828328/pexels-photo-8828328.jpeg
       APP_TITLE: SIGESSIS
       USERS_ALLOW_ANY_OAUTH: true
